@@ -1,28 +1,34 @@
 name: CD Deploy Backend
-on: 
- workflow_run:
-  workflows: ["CI Backend Tests"]
-  types: [completed]
+
+on:
+  workflow_run:
+    workflows: ["CI Backend Tests"]
+    types: [completed]
 
 jobs:
- deploy:
-  runs_on: ubuntu-latest
-  steps:
-  - uses: actions/checkout@v3
-  - run: docker build -t backend-app .
-  - run: |
-         aws ecr get-login-password --region us-east-1 |
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - run: docker build -t backend-app .
+
+    - run: |
+        aws ecr get-login-password --region us-east-1 |
         docker login --username AWS --password-stdin ${{ secrets.ECR_URL }}
-  - run: |
+
+    - run: |
         docker tag backend-app:latest ${{ secrets.ECR_URL }}:latest
         docker push ${{ secrets.ECR_URL }}:latest
-  - uses: appleboy/ssh-action@v1
-    with:
-     host: ${{ secrets.EC2_IP }}
-     username: ec2-user
-     key: ${{ secrets.EC2_KEY }}
-     script: |
-         docker pull ${{ secrets.ECR_URL }}:latest
+
+    - uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.EC2_IP }}
+        username: ec2-user
+        key: ${{ secrets.EC2_KEY }}
+        script: |
+          docker pull ${{ secrets.ECR_URL }}:latest
           docker stop backend || true
           docker rm backend || true
           docker run -d -p 3000:3000 --name backend ${{ secrets.ECR_URL }}:latest
