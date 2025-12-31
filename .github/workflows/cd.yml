@@ -20,6 +20,13 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    - name: Debug ECR URL
+      run: |
+        echo "ECR_URL=${{ secrets.ECR_URL }}"
+    - name: Login to Amazon ECR
+      run: |
+       aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+       docker login --username AWS --password-stdin ${{ secrets.ECR_URL }}
 
     - run: |
         aws ecr get-login-password --region us-east-1 |
