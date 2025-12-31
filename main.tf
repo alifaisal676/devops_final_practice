@@ -122,8 +122,11 @@ EOF
 
 output "ec2_ip" {
   value = aws_instance.backend_ec2.public_ip
+
 }
+
 
 output "ecr_url" {
   value = aws_ecr_repository.backend_repo.repository_url
 }
+   
