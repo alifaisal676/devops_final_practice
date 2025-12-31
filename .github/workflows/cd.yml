@@ -1,5 +1,6 @@
 name: CD Deploy Backend
 
+# Trigger this workflow after CI pipeline completes
 on:
   workflow_run:
     workflows: ["CI Backend Test pipeline"]
@@ -10,9 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 1️⃣ Checkout code
     - uses: actions/checkout@v3
 
-    - run: docker build -t backend-app .
+    # 2️⃣ Build Docker image locally on GitHub runner
+    - name: Build Docker image
+      run: docker build -t backend-app .
+
+    # 3️⃣ Configure AWS credentials (for ECR push)
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -20,29 +26,40 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    # 4️⃣ Debug ECR URL
     - name: Debug ECR URL
-      run: |
-        echo "ECR_URL=${{ secrets.ECR_URL }}"
+      run: echo "ECR_URL=${{ secrets.ECR_URL }}"
+
+    # 5️⃣ Login to ECR (GitHub runner)
     - name: Login to Amazon ECR
       run: |
-       aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-       docker login --username AWS --password-stdin ${{ secrets.ECR_URL }}
-
-    - run: |
-        aws ecr get-login-password --region us-east-1 |
+        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
         docker login --username AWS --password-stdin ${{ secrets.ECR_URL }}
 
-    - run: |
+    # 6️⃣ Tag and push Docker image to ECR
+    - name: Push Docker image to ECR
+      run: |
         docker tag backend-app:latest ${{ secrets.ECR_URL }}:latest
         docker push ${{ secrets.ECR_URL }}:latest
 
-    - uses: appleboy/ssh-action@v1
+    # 7️⃣ Deploy on EC2 via SSH
+    - name: Deploy Docker container on EC2
+      uses: appleboy/ssh-action@v1
       with:
         host: ${{ secrets.EC2_IP }}
         username: ec2-user
         key: ${{ secrets.EC2_KEY }}
         script: |
+          # Login to ECR on EC2 (needed for docker pull)
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.ECR_URL }}
+
+          # Pull the latest Docker image
           docker pull ${{ secrets.ECR_URL }}:latest
+
+          # Stop and remove existing container if exists
           docker stop backend || true
           docker rm backend || true
+
+          # Run the container
           docker run -d -p 3000:3000 --name backend ${{ secrets.ECR_URL }}:latest
