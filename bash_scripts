@@ -1,0 +1,106 @@
+#!/bin/bash
+# ==============================================
+# Complex Bash Script Examples for DevOps Practice
+# ==============================================
+
+# -----------------------------
+# Example 1: Function with Arguments
+# -----------------------------
+greet_user() {
+  local name=$1
+  echo "Hello, $name! Welcome to DevOps practice."
+}
+
+greet_user "Faisal"
+
+# -----------------------------
+# Example 2: Loop through files in a directory
+# -----------------------------
+echo "Listing all .txt files in current directory:"
+for file in *.txt; do
+  if [ -f "$file" ]; then
+    echo "File found: $file"
+  fi
+done
+
+# -----------------------------
+# Example 3: Array Iteration
+# -----------------------------
+servers=("web1" "web2" "web3")
+for server in "${servers[@]}"; do
+  echo "Deploying application to server: $server"
+done
+
+# -----------------------------
+# Example 4: Conditional Logic
+# -----------------------------
+num=15
+if [ $num -gt 10 ]; then
+  echo "$num is greater than 10"
+else
+  echo "$num is less or equal to 10"
+fi
+
+# -----------------------------
+# Example 5: Reading User Input
+# -----------------------------
+read -p "Enter your environment (dev/staging/prod): " env
+case $env in
+  dev)
+    echo "Development environment selected";;
+  staging)
+    echo "Staging environment selected";;
+  prod)
+    echo "Production environment selected";;
+  *)
+    echo "Invalid option";;
+esac
+
+# -----------------------------
+# Example 6: Logging with Timestamp
+# -----------------------------
+log_file="deploy.log"
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment started" >> $log_file
+
+# -----------------------------
+# Example 7: Download and Process File
+# -----------------------------
+# Simulating download using curl (replace URL with real one)
+url="https://example.com/sample.txt"
+output="sample_download.txt"
+
+curl -s $url -o $output
+if [ -f "$output" ]; then
+  echo "Downloaded $output successfully"
+  lines=$(wc -l < "$output")
+  echo "File has $lines lines" >> $log_file
+fi
+
+# -----------------------------
+# Example 8: Check Running Processes
+# -----------------------------
+process="nginx"
+if pgrep $process > /dev/null; then
+  echo "$process is running"
+else
+  echo "$process is not running"
+fi
+
+# -----------------------------
+# Example 9: Backup Directory
+# -----------------------------
+src_dir="/home/ec2-user/app"
+backup_dir="/home/ec2-user/backup"
+mkdir -p $backup_dir
+tar -czf "$backup_dir/app_backup_$(date +%F).tar.gz" "$src_dir"
+echo "Backup completed at $(date)" >> $log_file
+
+# -----------------------------
+# Example 10: Advanced For Loop with Sequence
+# -----------------------------
+echo "Deploying microservices:"
+for i in {1..5}; do
+  echo "Deploying microservice-$i"
+done
+
+# End of script
